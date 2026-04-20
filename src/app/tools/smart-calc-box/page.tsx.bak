@@ -1,0 +1,21 @@
+import React from 'react';
+import { Metadata } from 'next';
+import ToolLayout from '@/components/layout/ToolLayout';
+import SmartCalculator from '@/components/tools/SmartCalculator';
+import { TOOLS } from '@/data/tools';
+
+const tool = TOOLS.find(t => t.id === 'smart-calc-box')!;
+
+export const metadata: Metadata = {
+  title: `${tool.name} - 빠르고 정확한 온라인 물리/생활/금융 계산기 | ClickTools`,
+  description: tool.longDescription,
+  keywords: `계산기, 단위변환, BMI 계산, 환율 계산, 부가세 계산, ${tool.features.join(', ')}`,
+};
+
+export default function SmartCalcPage() {
+  return (
+    <ToolLayout tool={tool}>
+      <SmartCalculator />
+    </ToolLayout>
+  );
+}

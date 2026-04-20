@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-outfit: var(--font-outfit);
+
+  --color-primary: #3b82f6;
+  --color-secondary: #6366f1;
+}
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600;
+  }
+
+  .tool-container {
+    @apply bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 transition-all hover:shadow-blue-900/5;
+  }
+}
+
+@keyframes animate-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: animate-in 0.5s ease-out forwards;
+}
+
+/* Next.js 개발 표시기(N 버튼) 숨김 */
+#nextjs-portal, 
+[data-nextjs-toast-wrapper],
+.next-dev-tools-portal {
+  display: none !important;
+}
