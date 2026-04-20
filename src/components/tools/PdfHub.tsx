@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {useState, useCallback, useEffect, useRef, useMemo} from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
     FileImage, FileText, Globe, FileType2, FileSpreadsheet, 
@@ -11,7 +9,14 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TOOLS } from '@/lib/pdf-lib/constants';
-import { ToolId, ImageToPdfOptions, PdfToJpgOptions, ProcessingState, ConversionResult } from '@/types/pdf-tools';
+import {
+    ToolId,
+    ImageToPdfOptions,
+    PdfToJpgOptions,
+    ProcessingState,
+    ConversionResult,
+    HtmlToPdfOptions
+} from '@/types/pdf-tools';
 import { convertImagesToPdf } from '@/lib/pdf-lib/converters/imageToPdf';
 import { convertExcelToPdf } from '@/lib/pdf-lib/converters/excelToPdf';
 import { convertWordToPdf } from '@/lib/pdf-lib/converters/wordToPdf';
@@ -29,16 +34,10 @@ const iconMap: any = {
   FileImage, FileText, Globe, FileType2, FileSpreadsheet, Presentation, ScanText
 };
 
-export default function PdfHub() {
-    const searchParams = useSearchParams();
-    const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
 
-    useEffect(() => {
-        const toolId = searchParams.get('tool') as ToolId;
-        if (toolId && TOOLS.some(t => t.id === toolId)) {
-            setSelectedTool(toolId);
-        }
-    }, [searchParams]);
+export default function PdfHub({toolId}:{toolId:ToolId|null}) {
+
+    const [selectedTool,setSelectedTool]=useState<ToolId|null>(toolId)
 
     const [files, setFiles] = useState<any[]>([]); 
     const [processing, setProcessing] = useState<ProcessingState>({
@@ -131,12 +130,12 @@ export default function PdfHub() {
                 filename += '.pdf';
             } else if (selectedTool === 'pdf-to-jpg') {
                 const zipFiles: { name: string; content: Blob }[] = [];
-                setProcessing({ status: 'processing', progress: 10, message: 'PDF 분석 및 변환 중...' });
+                setProcessing({status: 'processing', progress: 10, message: 'PDF 분석 및 변환 중...'});
                 for (const f of fileList) {
                     const pageBlobs = await convertPdfToJpg(f, pdfToJpgOptions);
                     pageBlobs.forEach((b, idx) => {
                         const pageNum = (idx + 1).toString().padStart(3, '0');
-                        zipFiles.push({ name: `${f.name.replace('.pdf', '')}_p${pageNum}.jpg`, content: b });
+                        zipFiles.push({name: `${f.name.replace('.pdf', '')}_p${pageNum}.jpg`, content: b});
                     });
                 }
                 if (zipFiles.length === 0) throw new Error('변환된 페이지가 없습니다.');
@@ -144,29 +143,31 @@ export default function PdfHub() {
                     blob = zipFiles[0].content;
                     filename = zipFiles[0].name;
                 } else {
-                    setProcessing({ status: 'processing', progress: 80, message: 'ZIP 압축 중...' });
+                    setProcessing({status: 'processing', progress: 80, message: 'ZIP 압축 중...'});
                     blob = await createZip(zipFiles);
                     filename = `converted_pages.zip`;
                 }
-            } else if (selectedTool === 'word-to-pdf') {
-                setProcessing({ status: 'processing', progress: 10, message: 'Word 문서를 PDF로 변환하는 중...' });
-                const { convertWordToPdf } = await import('@/lib/pdf-lib/converters/wordToPdf');
-                blob = await convertWordToPdf(files.map(f => f.file));
-                filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
-            } else if (selectedTool === 'excel-to-pdf') {
-                setProcessing({ status: 'processing', progress: 10, message: 'Excel 시트를 분석 중...' });
-                const { convertExcelToPdf } = await import('@/lib/pdf-lib/converters/excelToPdf');
-                blob = await convertExcelToPdf(files.map(f => f.file));
-                filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
-            } else if (selectedTool === 'ppt-to-pdf') {
-                setProcessing({ status: 'processing', progress: 10, message: '슬라이드를 분석 중...' });
-                const { convertPptToPdf } = await import('@/lib/pdf-lib/converters/pptToPdf');
-                blob = await convertPptToPdf(files.map(f => f.file));
-                filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
-            } else if (selectedTool === 'html-to-pdf') {
+            }
+                /* }else if (selectedTool === 'word-to-pdf') {
+                    setProcessing({ status: 'processing', progress: 10, message: 'Word 문서를 PDF로 변환하는 중...' });
+                    const { convertWordToPdf } = await import('@/lib/pdf-lib/converters/wordToPdf');
+                    blob = await convertWordToPdf(files.map(f => f.file));
+                    filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
+                } else if (selectedTool === 'excel-to-pdf') {
+                    setProcessing({ status: 'processing', progress: 10, message: 'Excel 시트를 분석 중...' });
+                    const { convertExcelToPdf } = await import('@/lib/pdf-lib/converters/excelToPdf');
+                    blob = await convertExcelToPdf(files.map(f => f.file));
+                    filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
+                } else if (selectedTool === 'ppt-to-pdf') {
+                    setProcessing({ status: 'processing', progress: 10, message: '슬라이드를 분석 중...' });
+                    const { convertPptToPdf } = await import('@/lib/pdf-lib/converters/pptToPdf');
+                    blob = await convertPptToPdf(files.map(f => f.file));
+                    filename = `converted_${files[0].file.name.replace(/\.[^/.]+$/, '')}.pdf`;
+                    */
+            else if (selectedTool === 'html-to-pdf') {
                 setProcessing({ status: 'processing', progress: 10, message: 'URL 분석 중...' });
                 if (!htmlUrl) throw new Error('URL을 입력해주세요.');
-                
+
                 try {
                     const { convertHtmlToPdf } = await import('@/lib/pdf-lib/converters/htmlToPdf');
                     blob = await convertHtmlToPdf({ ...htmlOptions, url: htmlUrl });

@@ -70,9 +70,14 @@ export async function POST(req: NextRequest) {
                 timeout: 120000,
                 windowsHide: true,
             });
-        } catch (execError: any) {
+        } catch (execError) {
             console.error('LibreOffice execution failed:', execError);
-            throw new Error(`Conversion engine failed: ${execError.message}`);
+            if(execError instanceof Error){
+                throw new Error(`Conversion engine failed: ${execError.message}`);
+            }
+            else{
+                throw new Error(`Conversion engine failed`);
+            }
         }
 
         // 4. Read the PDF output
@@ -94,7 +99,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Office to PDF Native Conversion error:', error);
 
         if (tempOutputDir && existsSync(tempOutputDir)) {
@@ -102,7 +107,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: error.message || 'Failed to convert document natively' },
+            { error: error instanceof Error ? error.message || 'Failed to convert document natively' : 'Unknown error' },
             { status: 500 }
         );
     }

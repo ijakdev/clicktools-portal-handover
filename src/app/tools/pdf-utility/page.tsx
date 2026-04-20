@@ -1,8 +1,8 @@
-import React from 'react';
+import React, {Suspense} from 'react';
 import { Metadata } from 'next';
 import ToolLayout from '@/components/layout/ToolLayout';
-import PdfHub from '@/components/tools/PdfHub';
 import { TOOLS } from '@/data/tools';
+import {PageWrapper} from "@/app/tools/pdf-utility/page-wrapper";
 
 const tool = TOOLS.find(t => t.id === 'pdf-utility')!;
 
@@ -13,9 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default function PdfUtilityPage() {
+
   return (
     <ToolLayout tool={tool} hideHeader={true}>
-      <PdfHub />
+        <Suspense fallback={<div></div>}>
+            <PageWrapper />
+        </Suspense>
     </ToolLayout>
   );
 }

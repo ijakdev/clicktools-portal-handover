@@ -182,14 +182,17 @@ export default function ImageCompressor() {
 
   const downloadAllIndividually = () => {
     images.forEach((img, index) => {
-      if (img.status === 'done' && img.compressedPreview && img.compressedFile) {
+      if(img.status === 'done' && img.compressedPreview && img.compressedFile){
         setTimeout(() => {
-          const link = document.createElement('a');
-          link.href = img.compressedPreview!;
-          link.download = getFinalFileName(img.compressedFile.name, index);
-          link.click();
+          if (img.compressedFile) {
+            const link = document.createElement('a');
+            link.href = img.compressedPreview!;
+            link.download = getFinalFileName(img.compressedFile.name, index);
+            link.click();
+          }
         }, index * 150);
       }
+
     });
   };
 

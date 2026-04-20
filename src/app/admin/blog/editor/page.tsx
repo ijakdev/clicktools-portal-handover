@@ -118,7 +118,7 @@ const RichTextEditor = ({ value, onChange }: EditorProps) => {
                         <textarea ref={codeAreaRef} value={value} onChange={(e) => onChange(e.target.value)} className="flex-grow p-10 pt-10 bg-slate-950 text-indigo-400 font-mono text-sm leading-[21px] resize-none focus:outline-none whitespace-pre overflow-x-auto" spellCheck={false} />
                     </>
                 ) : (
-                    <div ref={editorRef} contentEditable onInput={handleInput} className="absolute inset-0 w-full h-full p-10 py-16 overflow-y-auto focus:outline-none blog-content prose prose-slate prose-indigo max-w-none text-slate-800 leading-loose text-lg whitespace-pre-wrap break-words" placeholder="본문 내용을 입력하세요..." />
+                    <div ref={editorRef} contentEditable onInput={handleInput} className="absolute inset-0 w-full h-full p-10 py-16 overflow-y-auto focus:outline-none blog-content prose prose-slate prose-indigo max-w-none text-slate-800 leading-loose text-lg whitespace-pre-wrap break-words" title="본문 내용을 입력하세요..." />
                 )}
             </div>
         </div>

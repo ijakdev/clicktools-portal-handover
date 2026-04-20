@@ -2,6 +2,14 @@
   "name": "clicktools-portal",
   "version": "0.1.0",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ],
+    "ignoredBuiltDependencies": [
+      "sqlite3"
+    ]
+  },
   "scripts": {
     "dev": "next dev",
     "network": "next dev -H 192.168.1.21 -p 5555",
@@ -16,7 +24,6 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@pdf-lib/fontkit": "^1.1.1",
-    "@types/archiver": "^7.0.0",
     "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "browser-image-compression": "^2.0.2",
@@ -27,7 +34,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^1.7.0",
     "mammoth": "^1.12.0",
-    "next": "16.2.2",
+    "next": "16.2.3",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.6.205",
     "pptxgenjs": "^4.0.1",
@@ -36,6 +43,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-dropzone": "^15.0.0",
+    "react-router-dom": "^7.14.1",
     "sonner": "^2.0.7",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1",
@@ -46,9 +54,12 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@mapbox/node-pre-gyp": "^2.0.3",
     "@tailwindcss/postcss": "^4",
+    "@types/archiver": "^7.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

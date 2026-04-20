@@ -1,7 +1,5 @@
-"use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { 
     Type, FileText, Trash2, Hash, AlignLeft, 
     Link as LinkIcon, Code, Copy, Check, RefreshCw, 
@@ -22,21 +20,14 @@ const IconMap: { [key: string]: any } = {
     Scissors, Eraser, Trash2, Code, ArrowDownUp, Type, Hash, ListFilter, Zap, RefreshCw, LinkIcon, FileText
 };
 
-export default function TextToolbox() {
-    const searchParams = useSearchParams();
+export default function TextToolbox({toolId}:{toolId:string|null}) {
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [stats, setStats] = useState<any>(null);
     const [copied, setCopied] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeToolId, setActiveToolId] = useState<string | null>(null);
+    const [activeToolId, setActiveToolId] = useState<string | null>(toolId);
 
-    useEffect(() => {
-        const toolId = searchParams.get('tool');
-        if (toolId && TEXT_ACTIONS.some(a => a.id === toolId)) {
-            setActiveToolId(toolId);
-        }
-    }, [searchParams]);
 
     const [isRealtime, setIsRealtime] = useState(true);
     const [codecMode, setCodecMode] = useState<'encode' | 'decode'>('encode');

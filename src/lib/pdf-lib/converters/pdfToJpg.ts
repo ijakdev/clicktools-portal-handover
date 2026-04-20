@@ -1,5 +1,6 @@
 import { PdfToJpgOptions } from '@/types/pdf-tools';
 
+
 export async function convertPdfToJpg(
     file: File,
     options: PdfToJpgOptions
@@ -9,9 +10,12 @@ export async function convertPdfToJpg(
     }
 
     // Dynamic import to prevent SSR DOMMatrix errors
-    const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+    const pdfjsLib =  await import('pdfjs-dist');
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf-utility/pdf.worker.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            'pdfjs-dist/build/pdf.worker.min.mjs',
+            import.meta.url
+        ).toString();
     }
 
     const arrayBuffer = await file.arrayBuffer();

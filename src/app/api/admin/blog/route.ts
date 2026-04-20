@@ -93,7 +93,7 @@ export async function PUT(req: NextRequest) {
                  updated_at = CURRENT_TIMESTAMP 
              WHERE id = ?`,
             [
-                slug, title, content, excerpt, category, thumbnail, 
+                slug, title, content, excerpt, category, thumbnail,
                 image_alt, image_caption,
                 image1, image1_alt, image1_caption,
                 image2, image2_alt, image2_caption,

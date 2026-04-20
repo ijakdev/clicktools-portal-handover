@@ -13,7 +13,7 @@ async function getStatsFromDb() {
     const rows = await db.all('SELECT name, value FROM global_stats');
     
     // 기본값 설정
-    const stats: any = { activeUsers: 0, filesConverted: 0, onlineTools: 0, pdfsCreated: 0 };
+    const stats:Record<string,number> = { activeUsers: 0, filesConverted: 0, onlineTools: 0, pdfsCreated: 0 };
     
     // DB에서 매핑된 값 주입
     rows.forEach(row => {
@@ -31,8 +31,10 @@ export async function GET() {
     try {
         const stats = await getStatsFromDb();
         return NextResponse.json(stats);
-    } catch (error: any) {
-        console.error("STATS_GET_ERROR:", error.message);
+    } catch (error) {
+        if(error instanceof Error){
+            console.error("STATS_GET_ERROR:", error.message);
+        }
         return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
     }
 }
@@ -55,8 +57,10 @@ export async function POST(request: Request) {
         }
         
         return NextResponse.json({ error: 'Invalid field' }, { status: 400 });
-    } catch (error: any) {
-        console.error("STATS_POST_ERROR:", error.message);
+    } catch (error) {
+        if(error instanceof Error){
+            console.error("STATS_POST_ERROR:", error.message);
+        }
         return NextResponse.json({ error: 'Failed to update stats' }, { status: 500 });
     }
 }

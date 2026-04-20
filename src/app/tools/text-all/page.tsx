@@ -1,8 +1,8 @@
-import React from 'react';
+import React, {Suspense} from 'react';
 import { Metadata } from 'next';
 import ToolLayout from '@/components/layout/ToolLayout';
-import TextToolbox from '@/components/tools/TextToolbox';
 import { TOOLS } from '@/data/tools';
+import {PageWrapper} from "@/app/tools/text-all/page-wrapper";
 
 const tool = TOOLS.find(t => t.id === 'text-all')!;
 
@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 export default function TextAllPage() {
   return (
     <ToolLayout tool={tool} hideHeader={true}>
-      <TextToolbox />
+      <Suspense fallback={<div></div>}>
+        <PageWrapper />
+      </Suspense>
     </ToolLayout>
   );
 }
