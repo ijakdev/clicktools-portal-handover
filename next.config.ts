@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
     ];
   },
   devIndicators: {
-    buildActivity: false,
+    position:undefined
   },
 };
 
