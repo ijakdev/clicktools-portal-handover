@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Url {
+  id           Int        @id @default(autoincrement())
+  userId       String?    @map("user_id")
+  shortCode    String     @unique @map("short_code")
+  originalUrl  String     @map("original_url")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  expiresAt    DateTime?  @map("expires_at")
+  clickCount   Int        @default(0) @map("click_count")
+  clickLogs    ClickLog[]
+
+  @@map("urls")
+}
+
+model ClickLog {
+  id        Int      @id @default(autoincrement())
+  shortCode String   @map("short_code")
+  ip        String
+  device    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  url       Url      @relation(fields: [shortCode], references: [shortCode], onDelete: Cascade)
+
+  @@index([shortCode])
+  @@map("click_logs")
+}
+
+model Inquiry {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  title     String
+  message   String
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("inquiries")
+}
+
+model BlogPost {
+  id            Int       @id @default(autoincrement())
+  slug          String    @unique
+  title         String
+  content       String
+  excerpt       String
+  category      String
+  thumbnail     String
+  imageAlt      String?   @map("image_alt")
+  imageCaption  String?   @map("image_caption")
+  image1        String?
+  image1Alt     String?   @map("image1_alt")
+  image1Caption String?   @map("image1_caption")
+  image2        String?
+  image2Alt     String?   @map("image2_alt")
+  image2Caption String?   @map("image2_caption")
+  image3        String?
+  image3Alt     String?   @map("image3_alt")
+  image3Caption String?   @map("image3_caption")
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+model GlobalStat {
+  name  String @id
+  value Int    @default(0)
+
+  @@map("global_stats")
+}
