@@ -197,7 +197,7 @@ function EditorContent() {
         if (!file) return;
         const formData = new FormData();
         formData.append('file', file);
-        let targetName = slot === 'thumbnail' ? thumbName : slot === 'image1' ? img1Name : slot === 'image2' ? img2Name : img3Name;
+        const targetName = slot === 'thumbnail' ? thumbName : slot === 'image1' ? img1Name : slot === 'image2' ? img2Name : img3Name;
         if (targetName) formData.append('customFilename', targetName);
 
         try {

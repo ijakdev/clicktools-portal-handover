@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 
-const BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function generateShortCode(length = 4) {
     let code = '';
@@ -31,22 +31,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '유효한 HTTP/HTTPS URL을 입력해주세요.' }, { status: 400 });
         }
 
-        const db = await getDb();
         let shortCode = customCode ? customCode.trim() : '';
 
-        // Check if custom code exists
         if (shortCode) {
-            const existing = await db.get('SELECT * FROM urls WHERE short_code = ?', [shortCode]);
+            const existing = await prisma.url.findUnique({ where: { shortCode } });
             if (existing) {
                 return NextResponse.json({ error: '이미 사용 중인 단축 코드입니다.' }, { status: 400 });
             }
         } else {
-            // Auto generate
             let isUnique = false;
             let attempts = 0;
             while (!isUnique && attempts < 5) {
                 shortCode = generateShortCode();
-                const existing = await db.get('SELECT * FROM urls WHERE short_code = ?', [shortCode]);
+                const existing = await prisma.url.findUnique({ where: { shortCode } });
                 if (!existing) isUnique = true;
                 attempts++;
             }
@@ -55,39 +52,40 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        let expiresAt = null;
+        let expiresAt: Date | null = null;
         if (expiresIn && expiresIn !== 'unlimited') {
             const now = new Date();
             if (expiresIn === '24h') now.setHours(now.getHours() + 24);
             else if (expiresIn === '48h') now.setHours(now.getHours() + 48);
             else if (expiresIn === '1w') now.setDate(now.getDate() + 7);
             else if (expiresIn === '1m') now.setMonth(now.getMonth() + 1);
-            expiresAt = now.toISOString();
+            expiresAt = now;
         }
 
-        await db.run(
-            'INSERT INTO urls (short_code, original_url, expires_at) VALUES (?, ?, ?)',
-            [shortCode, url, expiresAt]
-        );
+        await prisma.url.create({
+            data: {
+                shortCode,
+                originalUrl: url,
+                expiresAt,
+            },
+        });
 
-        // 상시 누적 카운터 증가
-        await db.run(
-            'UPDATE global_stats SET value = value + 1 WHERE name = ?',
-            ['url_shortener_total_creations']
-        );
+        // 상시 누적 카운터 증가 (없으면 생성)
+        await prisma.globalStat.upsert({
+            where: { name: 'url_shortener_total_creations' },
+            create: { name: 'url_shortener_total_creations', value: 1 },
+            update: { value: { increment: 1 } },
+        });
 
-        // Force production domain for the short URL string
         const shortUrl = `https://www.clicktools.co.kr/s/${shortCode}`;
-        
         const qrCodeDataUrl = await QRCode.toDataURL(shortUrl);
 
         return NextResponse.json({
             short_url: shortUrl,
             qr_code: qrCodeDataUrl,
-            short_code: shortCode
+            short_code: shortCode,
         });
-
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
         return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 });
     }
@@ -97,14 +95,17 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const filter = searchParams.get('filter');
-        const db = await getDb();
-        
-        let rows;
-        if (filter === 'clicks') {
-            rows = await db.all('SELECT * FROM urls WHERE click_count > 0 ORDER BY click_count DESC LIMIT 10');
-        } else {
-            rows = await db.all('SELECT * FROM urls ORDER BY created_at DESC LIMIT 10');
-        }
+
+        const rows = filter === 'clicks'
+            ? await prisma.url.findMany({
+                where: { clickCount: { gt: 0 } },
+                orderBy: { clickCount: 'desc' },
+                take: 10,
+            })
+            : await prisma.url.findMany({
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+            });
 
         return NextResponse.json(rows);
     } catch (error) {

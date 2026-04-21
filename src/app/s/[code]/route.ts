@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { UAParser } from 'ua-parser-js';
 
 // FORCE_REFRESH_TIMESTAMP: 2026-04-14 13:56:00
@@ -12,14 +12,13 @@ export async function GET(
     const { code } = await (await context).params;
 
     try {
-        const db = await getDb();
-        const urlData = await db.get('SELECT * FROM urls WHERE short_code = ?', [code]);
+        const urlData = await prisma.url.findUnique({ where: { shortCode: code } });
 
         if (urlData) {
             // Check expiration
-            if (urlData.expires_at) {
+            if (urlData.expiresAt) {
                 const now = new Date();
-                const expireDate = new Date(urlData.expires_at);
+                const expireDate = new Date(urlData.expiresAt);
                 if (now > expireDate) {
                     return new NextResponse(
                         `
@@ -60,11 +59,16 @@ export async function GET(
             const device = parser.getDevice().type || 'desktop';
 
             // Persistent Logging (Awaiting to ensure completion in all environments)
-            await db.run('UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?', [code]);
-            await db.run('INSERT INTO click_logs (short_code, ip, device) VALUES (?, ?, ?)', [code, ip, device]);
+            await prisma.url.update({
+                where: { shortCode: code },
+                data: { clickCount: { increment: 1 } },
+            });
+            await prisma.clickLog.create({
+                data: { shortCode: code, ip, device },
+            });
 
             // Redirect
-            return NextResponse.redirect(urlData.original_url, {
+            return NextResponse.redirect(urlData.originalUrl, {
                 status: 302,
                 headers: {
                     'Cache-Control': 'no-store, no-cache, must-revalidate, private'

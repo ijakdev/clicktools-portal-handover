@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        const db = await getDb();
-        const posts = await db.all("SELECT * FROM blog_posts WHERE (published_at IS NULL OR published_at = '' OR datetime(published_at) <= datetime('now', 'localtime')) ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3");
+        const now = new Date();
+        const posts = await prisma.blogPost.findMany({
+            where: {
+                OR: [
+                    { publishedAt: null },
+                    { publishedAt: { lte: now } },
+                ],
+            },
+            orderBy: [
+                { publishedAt: 'desc' },
+                { createdAt: 'desc' },
+            ],
+            take: 3,
+        });
         return NextResponse.json(posts);
     } catch (error) {
         console.error('Latest Blog API Error:', error);

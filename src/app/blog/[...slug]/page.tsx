@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { Calendar, User, ArrowLeft, Calculator, Wrench, ChevronRight, FileText, Type } from 'lucide-react';
 import Link from 'next/link';
 
@@ -12,17 +12,20 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const slugStr = slug.join('/');
-  const db = await getDb();
-  
+  const now = new Date();
+
   // 예약된 포스트는 메타데이터에서도 제외 (404 처리와 동일한 로직)
-  const post = await db.get(
-    "SELECT title, excerpt FROM blog_posts WHERE slug = ? AND (published_at IS NULL OR published_at = '' OR datetime(published_at) <= datetime('now', 'localtime'))", 
-    [slugStr]
-  );
-  
-  if (!post) return { 
+  const post = await prisma.blogPost.findFirst({
+    where: {
+      slug: slugStr,
+      OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+    },
+    select: { title: true, excerpt: true },
+  });
+
+  if (!post) return {
     title: '페이지를 찾을 수 없습니다 | ClickTools',
-    robots: { index: false, follow: false }
+    robots: { index: false, follow: false },
   };
 
   return {
@@ -89,19 +92,22 @@ export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
   const slugStr = slug.join('/');
   const lastSegment = slug[slug.length - 1];
-  const db = await getDb();
-  
+  const now = new Date();
+
   // 끝판왕 검색 로직: 전체 경로 일치 -> 슬래시 포함 일치 -> 마지막 조각 일치 순으로 검색
-  const post = await db.get(
-    `SELECT * FROM blog_posts 
-     WHERE (slug = ? OR slug = ? OR slug = ? OR slug = ?) 
-     AND (published_at IS NULL OR published_at = '' OR datetime(published_at) <= datetime('now', 'localtime'))`, 
-    [slugStr, `/${slugStr}`, slugStr.replace(/^\//, ''), lastSegment]
-  );
+  const candidateSlugs = Array.from(new Set([slugStr, `/${slugStr}`, slugStr.replace(/^\//, ''), lastSegment]));
+  const post = await prisma.blogPost.findFirst({
+    where: {
+      slug: { in: candidateSlugs },
+      OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+    },
+  });
 
     if (!post) {
       notFound();
     }
+
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
     const formatContent = (content: string, postData: any) => {
         if (!content) return '';
@@ -112,8 +118,8 @@ export default async function BlogDetailPage({ params }: Props) {
         for (let i = 1; i <= 3; i++) {
             const marker = `{{IMAGE_${i}}}`;
             const imgUrl = postData[`image${i}`];
-            const alt = postData[`image${i}_alt`] || '';
-            const caption = postData[`image${i}_caption`] || '';
+            const alt = postData[`image${i}Alt`] || '';
+            const caption = postData[`image${i}Caption`] || '';
 
             if (imgUrl) {
                 const imgHtml = `
@@ -179,7 +185,7 @@ export default async function BlogDetailPage({ params }: Props) {
           <div className="flex items-center space-x-6 text-sm text-slate-400 border-b border-slate-100 pb-8">
             <div className="flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
-              <span>{post.created_at.split(' ')[0]}</span>
+              <span>{formatDate(post.createdAt)}</span>
             </div>
             <div className="flex items-center">
               <User className="w-4 h-4 mr-2" />
@@ -193,13 +199,13 @@ export default async function BlogDetailPage({ params }: Props) {
           <div className="aspect-video w-full rounded-3xl overflow-hidden shadow-2xl mb-4 group ring-1 ring-slate-100">
             <img 
               src={post.thumbnail} 
-              alt={post.image_alt || post.title} 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+              alt={post.imageAlt || post.title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           </div>
-          {post.image_caption && (
+          {post.imageCaption && (
             <p className="text-center text-sm text-slate-400 font-medium">
-              📸 {post.image_caption}
+              📸 {post.imageCaption}
             </p>
           )}
         </div>

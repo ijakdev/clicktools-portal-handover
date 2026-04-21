@@ -4,13 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TOOLS } from '@/data/tools';
 import {
-    FileImage, FileText, Globe, FileType2, FileSpreadsheet,
-    Presentation, ScanText, ArrowRight, Zap, Gift, ShieldCheck,
-    Database, Landmark, User, Cloud, MousePointer2, Activity,
-    ChevronRight, Calendar, Calculator, Maximize, Link2, QrCode, Type, Music,
-    Sparkles, ArrowUpRight
+    FileImage, FileText, ArrowRight, Zap, Calculator,
+    Maximize, Link2, QrCode, Type, Music, ArrowUpRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {format} from "date-fns";
+import Image from 'next/image';
 
 const IconMap: { [key: string]: any } = {
     Calculator,
@@ -177,9 +176,9 @@ export default function Home() {
                                     { title: "⚡ 웹 방식의 빠른 처리 속도", desc: "대규모 작업도 즉시 처리", img: "/images/features/speed.png" },
                                     { title: "🔒 자동 삭제 보안", desc: "작업 완료 시 데이터 즉시 폐기", img: "/images/features/security.png" },
                                     { title: "🌐 모든 기기 지원", desc: "PC, 태블릿, 모바일 완벽 호환", img: "/images/features/universal.png" },
-                                ].map((item, i) => (
+                                ].map((item , i) => (
                                     <div key={i} className="p-8 bg-white border border-slate-200 hover:border-indigo-600 transition-all group flex flex-col items-center text-center">
-                                        <div className="w-32 h-32 mb-8 flex items-center justify-center p-4 border border-slate-100">
+                                       <div className="w-32 h-32 mb-8 flex items-center justify-center p-4 border border-slate-100">
                                             <img src={item.img} alt={item.title} className="w-full h-full object-contain filter grayscale-0 group-hover:grayscale transition-all duration-500" />
                                         </div>
                                         <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">{item.title}</h4>
@@ -209,7 +208,7 @@ export default function Home() {
                                             className="group/item flex items-start gap-8"
                                         >
                                             <div className="w-40 aspect-[1.3] border border-slate-200 overflow-hidden shrink-0">
-                                                <img src={post.thumbnail} alt="" className="w-full h-full object-cover filter grayscale-0 group-hover/item:grayscale group-hover/item:scale-105 transition-all duration-700" />
+                                                <img src={post.thumbnail} alt=""  className="w-full h-full object-cover filter grayscale-0 group-hover/item:grayscale group-hover/item:scale-105 transition-all duration-700" />
                                             </div>
                                             <div className="flex flex-col gap-2 py-1">
                                                 <div className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">{post.category}</div>
@@ -217,7 +216,7 @@ export default function Home() {
                                                     {post.title}
                                                 </h4>
                                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
-                                                    {(post.published_at || post.created_at).split(' ')[0]}
+                                                    {format((post.publishedAt ?? post.createdAt),'yyyy-MM-dd')}
                                                 </div>
                                             </div>
                                         </Link>

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { Calendar, ChevronRight } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -11,29 +11,40 @@ export const metadata: Metadata = {
 
 export default async function BlogListPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category: selectedCategory } = await searchParams;
-  const db = await getDb();
-  
+  const now = new Date();
+
   // 모든 카테고리 목록 가져오기
-  const categoriesTable = await db.all('SELECT DISTINCT category FROM blog_posts');
-  const categories = ['전체', ...categoriesTable.map(c => c.category)];
+  const categoriesTable = await prisma.blogPost.findMany({
+    distinct: ['category'],
+    select: { category: true },
+  });
+  const categories = ['전체', ...categoriesTable.map((c) => c.category)];
 
-  // 쿼리 조건 설정
-  let query = "SELECT * FROM blog_posts WHERE (published_at IS NULL OR published_at = '' OR datetime(published_at) <= datetime('now', 'localtime'))";
-  const params: any[] = [];
+  // 예약 공개(publishedAt) 반영 + 카테고리 필터
+  const posts = await prisma.blogPost.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            { publishedAt: null },
+            { publishedAt: { lte: now } },
+          ],
+        },
+        ...(selectedCategory && selectedCategory !== '전체'
+          ? [{ category: selectedCategory }]
+          : []),
+      ],
+    },
+    orderBy: [
+      { publishedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
+  });
 
-  if (selectedCategory && selectedCategory !== '전체') {
-    query += ' AND category = ?';
-    params.push(selectedCategory);
-  }
+  const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
-  query += ' ORDER BY COALESCE(published_at, created_at) DESC';
-  
-  const posts = await db.all(query, params);
-
-  const isNew = (dateStr: string) => {
-    const postDate = new Date(dateStr.replace(' ', 'T'));
-    const now = new Date();
-    const diff = now.getTime() - postDate.getTime();
+  const isNew = (d: Date) => {
+    const diff = now.getTime() - d.getTime();
     return diff < 3 * 24 * 60 * 60 * 1000; // 3일 이내
   };
 
@@ -90,7 +101,7 @@ export default async function BlogListPage({ searchParams }: { searchParams: Pro
         {/* Post Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 max-w-6xl mx-auto">
           {posts.map((post) => {
-            const displayDate = post.published_at || post.created_at;
+            const displayDate = post.publishedAt ?? post.createdAt;
             const newlyPublished = isNew(displayDate);
 
             return (
@@ -124,7 +135,7 @@ export default async function BlogListPage({ searchParams }: { searchParams: Pro
                   <div className="flex items-center text-[10px] text-slate-400 mb-4 font-black uppercase tracking-[0.2em] space-x-4">
                     <div className="flex items-center">
                       <Calendar className="w-3.5 h-3.5 mr-2 text-blue-500" />
-                      <span>{displayDate.split(' ')[0]}</span>
+                      <span>{formatDate(displayDate)}</span>
                     </div>
                   </div>
                   

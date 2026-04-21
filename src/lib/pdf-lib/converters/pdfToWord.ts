@@ -6,7 +6,10 @@ export async function convertPdfToWord(file: File): Promise<Blob> {
     // Dynamically load pdfjs to prevent SSR crashes
     const pdfjsLib = await import('pdfjs-dist');
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf-utility/pdf.worker.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            'pdfjs-dist/build/pdf.worker.min.mjs',
+            import.meta.url
+        ).toString();
     }
 
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;

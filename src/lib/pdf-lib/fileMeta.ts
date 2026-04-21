@@ -49,7 +49,10 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
 async function getPdfPageCount(file: File): Promise<number> {
     const pdfjsLib = await import('pdfjs-dist');
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf-utility/pdf.worker.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            'pdfjs-dist/build/pdf.worker.min.mjs',
+            import.meta.url
+        ).toString();
     }
     const arrayBuffer = await file.arrayBuffer();
     // Using standard font data to avoid CDN font issues if possible, 

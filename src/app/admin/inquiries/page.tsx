@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {format} from "date-fns";
 
 interface Inquiry {
     id: number;
@@ -15,7 +16,7 @@ interface Inquiry {
     title: string;
     message: string;
     status: string;
-    created_at: string;
+    createdAt: string;
 }
 
 export default function AdminInquiriesPage() {
@@ -149,7 +150,7 @@ export default function AdminInquiriesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            {inquiry.created_at.split(' ')[0]}
+                                            {format(inquiry.createdAt,'yyyy-MM-dd')}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button 

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        const db = await getDb();
-        const inquiries = await db.all('SELECT * FROM inquiries ORDER BY created_at DESC');
+        const inquiries = await prisma.inquiry.findMany({ orderBy: { createdAt: 'desc' } });
         return NextResponse.json(inquiries);
     } catch (error) {
         console.error('Inquiries API GET Error:', error);
@@ -20,8 +19,10 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'ID와 상태가 필요합니다.' }, { status: 400 });
         }
 
-        const db = await getDb();
-        await db.run('UPDATE inquiries SET status = ? WHERE id = ?', [status, id]);
+        await prisma.inquiry.update({
+            where: { id: Number(id) },
+            data: { status },
+        });
 
         return NextResponse.json({ success: true, message: '문의 상태가 업데이트되었습니다.' });
     } catch (error) {
@@ -37,8 +38,7 @@ export async function DELETE(req: NextRequest) {
 
         if (!id) return NextResponse.json({ error: 'ID가 필요합니다.' }, { status: 400 });
 
-        const db = await getDb();
-        await db.run('DELETE FROM inquiries WHERE id = ?', [id]);
+        await prisma.inquiry.delete({ where: { id: Number(id) } });
 
         return NextResponse.json({ success: true, message: '문의가 삭제되었습니다.' });
     } catch (error) {
