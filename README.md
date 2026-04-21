@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 First, run the development server:
 
 
-node 22.4.1 version
+node 24.4.1 version
 
 pnpm -v
 
