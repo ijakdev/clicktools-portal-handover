@@ -30,8 +30,9 @@ export async function POST(req: NextRequest) {
                 .replace(/[^a-z0-9-]/g, '');
             safeFileName = `${baseName}${ext}`;
         } else {
+            const ext = file.name.split('.').pop() || 'bin';
             const timestamp = Date.now();
-            safeFileName = `${timestamp}-${file.name.replace(/\s+/g, '_')}`;
+            safeFileName = `${timestamp}-${crypto.randomUUID()}.${ext}`;
         }
 
         // Supabase Storage에 업로드 (blog/ prefix 아래에 저장)
