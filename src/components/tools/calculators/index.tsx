@@ -358,8 +358,8 @@ export const NetSpeedCalculator = ({ onResult }: CalcProps) => {
     const [vUnit, setVUnit] = useState('Mbps');
     const time = useMemo(() => {
         if (!size || !speed) return 0;
-        const bits = sUnit === 'GB' ? size * 8 * 1024 * 1024 * 1024 : size * 8 * 1024 * 1024;
-        const speedBits = vUnit === 'Mbps' ? speed * 1000000 : speed * 1000;
+        const bits = sUnit === 'GB' ? Number(size) * 8 * 1024 * 1024 * 1024 : Number(size) * 8 * 1024 * 1024;
+        const speedBits = vUnit === 'Mbps' ? Number(speed) * 1000000 : Number(speed) * 1000;
         return bits / speedBits;
     }, [size, sUnit, speed, vUnit]);
     useEffect(() => { onResult(Math.round(time) + '초'); }, [time, onResult]);
@@ -370,8 +370,61 @@ export const NetSpeedCalculator = ({ onResult }: CalcProps) => {
             resultUnit="초"
             inputs={
                 <>
-                    <InputGroup label="용량" value={size} onChange={setSize} unit={sUnit} options={['MB', 'GB']} />
-                    <InputGroup label="속도" value={speed} onChange={setSpeed} unit={vUnit} options={['Kbps', 'Mbps']} />
+                    <InputGroup label="용량" value={size} onChange={(v: any, u: string) => { if (u) setSUnit(u); else setSize(v); }} unit={sUnit} options={['MB', 'GB']} />
+                    <InputGroup label="속도" value={speed} onChange={(v: any, u: string) => { if (u) setVUnit(u); else setSpeed(v); }} unit={vUnit} options={['Kbps', 'Mbps']} />
+                </>
+            }
+        />
+    );
+};
+
+export const TemperatureConverter = ({ onResult }: CalcProps) => {
+    const units = ['°C', '°F', 'K'];
+    const [val, setVal] = useState(0);
+    const [fromUnit, setFromUnit] = useState('°C');
+    const [toUnit, setToUnit] = useState('°F');
+
+    const result = useMemo(() => {
+        const v = Number(val);
+        if (isNaN(v)) return 0;
+
+        // 1. Convert to Celsius
+        let c = v;
+        if (fromUnit === '°F') c = (v - 32) / 1.8;
+        else if (fromUnit === 'K') c = v - 273.15;
+
+        // 2. Convert to target
+        if (toUnit === '°C') return c;
+        if (toUnit === '°F') return (c * 1.8) + 32;
+        if (toUnit === 'K') return c + 273.15;
+        return c;
+    }, [val, fromUnit, toUnit]);
+
+    useEffect(() => {
+        onResult(result.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + toUnit);
+    }, [result, toUnit, onResult]);
+
+    return (
+        <CalcLayout
+            resultLabel="온도 변환"
+            resultValue={result}
+            resultUnit={toUnit}
+            inputs={
+                <>
+                    <InputGroup
+                        label="입력 온도"
+                        value={val}
+                        onChange={(v: any, u: string) => { if (u) setFromUnit(u); else setVal(v); }}
+                        unit={fromUnit}
+                        options={units}
+                    />
+                    <InputGroup
+                        label="출력 온도"
+                        value={val}
+                        onChange={(v: any, u: string) => { if (u) setToUnit(u); else setVal(v); }}
+                        unit={toUnit}
+                        options={units}
+                    />
                 </>
             }
         />
@@ -416,8 +469,20 @@ export const GenericConverter = ({ units, defaultFrom, defaultTo, onResult, labe
             resultUnit={toUnit}
             inputs={
                 <>
-                    <InputGroup label="입력 유형" value={val} onChange={setVal} unit={fromUnit} options={Object.keys(units)} />
-                    <InputGroup label="출력 유형" value={val} onChange={(v: string, u: string) => { if (u) setToUnit(u); else setVal(Number(v)); }} unit={toUnit} options={Object.keys(units)} />
+                    <InputGroup
+                        label="입력 유형"
+                        value={val}
+                        onChange={(v: any, u: string) => { if (u) setFromUnit(u); else setVal(v); }}
+                        unit={fromUnit}
+                        options={Object.keys(units)}
+                    />
+                    <InputGroup
+                        label="출력 유형"
+                        value={val}
+                        onChange={(v: any, u: string) => { if (u) setToUnit(u); else setVal(v); }}
+                        unit={toUnit}
+                        options={Object.keys(units)}
+                    />
                 </>
             }
         />
@@ -437,12 +502,13 @@ export const renderCalculator = (id: string, handleResult: (res: any) => void) =
         case 'fuel': return <FuelCalculator onResult={handleResult} />;
         case 'disc': return <DiscountCalculator onResult={handleResult} />;
         case 'speed_net': return <NetSpeedCalculator onResult={handleResult} />;
+        case 'temp': return <TemperatureConverter onResult={handleResult} />;
         case 'pyeong': return <SpecialConverter type="pyeong" onResult={handleResult} />;
         case 'fx': return <SpecialConverter type="fx" onResult={handleResult} />;
         case 'savings': return <SavingsCalculator onResult={handleResult} />;
         default:
             const unitRefData = unitRef[id];
-            if (unitRefData) return <GenericConverter units={unitRefData.units} defaultFrom={unitRefData.from} defaultTo={unitRefData.to} onResult={handleResult} label={unitRefData.label} />;
+            if (unitRefData) return <GenericConverter key={id} units={unitRefData.units} defaultFrom={unitRefData.from} defaultTo={unitRefData.to} onResult={handleResult} label={unitRefData.label} />;
             return <div className="p-10 text-center font-black text-slate-300 italic opacity-40">ENGINE RECHARGING...</div>;
     }
 };

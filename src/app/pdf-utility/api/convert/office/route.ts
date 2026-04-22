@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execFile } from 'child_process';
+import { execFile, execSync } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
@@ -9,16 +9,43 @@ import crypto from 'crypto';
 
 const execFileAsync = promisify(execFile);
 
-// Common installation paths for LibreOffice on Windows
-const LIBREOFFICE_PATHS = [
-    'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-    'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
-];
-
+/**
+ * 서버 환경에 맞는 LibreOffice(soffice) 실행 파일 경로를 찾아옵니다.
+ */
 function getLibreOfficePath(): string | null {
-    for (const p of LIBREOFFICE_PATHS) {
+    // 1. 운영체제별 공통 경로 목록
+    const winPaths = [
+        'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+        'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+    ];
+    
+    const linuxPaths = [
+        '/usr/bin/soffice',
+        '/usr/bin/libreoffice',
+        '/usr/local/bin/soffice',
+        '/snap/bin/libreoffice',
+    ];
+
+    const platformPaths = process.platform === 'win32' ? winPaths : linuxPaths;
+
+    // 2. 고정 경로 확인
+    for (const p of platformPaths) {
         if (existsSync(p)) return p;
     }
+
+    // 3. 시스템 PATH에서 명령어 확인 (which/where)
+    try {
+        const cmd = process.platform === 'win32' ? 'where soffice' : 'which soffice';
+        const result = execSync(cmd).toString().trim();
+        if (result) {
+            // where 명령어는 여러 경로를 출력할 수 있으므로 첫 번째 줄 사용
+            const firstPath = result.split('\n')[0].trim();
+            if (existsSync(firstPath)) return firstPath;
+        }
+    } catch (e) {
+        // PATH에 없음
+    }
+
     return null;
 }
 
@@ -37,7 +64,10 @@ export async function POST(req: NextRequest) {
 
         const sofficePath = getLibreOfficePath();
         if (!sofficePath) {
-            return NextResponse.json({ error: 'LibreOffice is not installed on the server.' }, { status: 500 });
+            return NextResponse.json({ 
+                error: '서버에 LibreOffice가 설치되어 있지 않거나 경로를 찾을 수 없습니다.',
+                details: '서버에 LibreOffice를 설치해 주세요. (Windows: C:\\Program Files\\LibreOffice, Linux: sudo apt install libreoffice)'
+            }, { status: 500 });
         }
 
         // 1. Prepare secure temporary workspace
@@ -74,8 +104,7 @@ export async function POST(req: NextRequest) {
             console.error('LibreOffice execution failed:', execError);
             if(execError instanceof Error){
                 throw new Error(`Conversion engine failed: ${execError.message}`);
-            }
-            else{
+            }else{
                 throw new Error(`Conversion engine failed`);
             }
         }

@@ -130,7 +130,7 @@ export default function PdfHub({toolId}:{toolId:ToolId|null}) {
                 filename += '.pdf';
             } else if (selectedTool === 'pdf-to-jpg') {
                 const zipFiles: { name: string; content: Blob }[] = [];
-                setProcessing({status: 'processing', progress: 10, message: 'PDF 분석 및 변환 중...'});
+                setProcessing({ status: 'processing', progress: 10, message: 'PDF 분석 및 변환 중...' });
                 for (const f of fileList) {
                     const pageBlobs = await convertPdfToJpg(f, pdfToJpgOptions);
                     pageBlobs.forEach((b, idx) => {
@@ -452,7 +452,7 @@ export default function PdfHub({toolId}:{toolId:ToolId|null}) {
                                     "bg-[#f87171] hover:bg-[#ef4444] shadow-red-100"
                                 )}
                             >
-                                PDF로 변환하기
+                                {selectedTool === 'pdf-to-jpg' ? 'JPG로 변환하기' : 'PDF로 변환하기'}
                             </button>
                         </div>
                     </div>

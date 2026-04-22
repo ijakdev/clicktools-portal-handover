@@ -323,30 +323,50 @@ const NetSpeedCalculator = ({ onResult }: CalcProps) => {
     const [vUnit, setVUnit] = useState('Mbps');
     const time = useMemo(() => {
         if (!size || !speed) return 0;
-        const bits = sUnit === 'GB' ? size * 8 * 1024 * 1024 * 1024 : size * 8 * 1024 * 1024;
-        const speedBits = vUnit === 'Mbps' ? speed * 1000000 : speed * 1000;
+        const bits = sUnit === 'GB' ? Number(size) * 8 * 1024 * 1024 * 1024 : Number(size) * 8 * 1024 * 1024;
+        const speedBits = vUnit === 'Mbps' ? Number(speed) * 1000000 : Number(speed) * 1000;
         return bits / speedBits;
     }, [size, sUnit, speed, vUnit]);
     useEffect(() => { onResult(Math.round(time) + '초'); }, [time, onResult]);
     return (
         <div className="flex flex-col gap-4">
             <div className="flex gap-4">
-                <InputGroup label="용량" value={size} onChange={setSize} unit="" />
-                <div className="mt-8">
-                    <select className="h-[64px] px-6 bg-slate-50 border border-slate-200 rounded-2xl font-black shadow-inner outline-none focus:bg-white focus:border-indigo-600" value={sUnit} onChange={e => setSUnit(e.target.value)}>
-                        <option value="MB">MB</option><option value="GB">GB</option>
-                    </select>
-                </div>
+                <InputGroup label="용량" value={size} onChange={(v: any, u: string) => { if (u) setSUnit(u); else setSize(v); }} unit={sUnit} options={['MB', 'GB']} />
             </div>
             <div className="flex gap-4">
-                <InputGroup label="속도" value={speed} onChange={setSpeed} unit="" />
-                <div className="mt-8">
-                    <select className="h-[64px] px-6 bg-slate-50 border border-slate-200 rounded-2xl font-black shadow-inner outline-none focus:bg-white focus:border-indigo-600" value={vUnit} onChange={e => setVUnit(e.target.value)}>
-                        <option value="Kbps">Kbps</option><option value="Mbps">Mbps</option>
-                    </select>
-                </div>
+                <InputGroup label="속도" value={speed} onChange={(v: any, u: string) => { if (u) setVUnit(u); else setSpeed(v); }} unit={vUnit} options={['Kbps', 'Mbps']} />
             </div>
             <ResultField label="예상 시간" value={Math.round(time)} unit="초" />
+        </div>
+    );
+};
+
+const TemperatureConverter = ({ onResult }: CalcProps) => {
+    const units = ['°C', '°F', 'K'];
+    const [val, setVal] = useState(0);
+    const [fromUnit, setFromUnit] = useState('°C');
+    const [toUnit, setToUnit] = useState('°F');
+
+    const result = useMemo(() => {
+        const v = Number(val);
+        if (isNaN(v)) return 0;
+        let c = v;
+        if (fromUnit === '°F') c = (v - 32) / 1.8;
+        else if (fromUnit === 'K') c = v - 273.15;
+
+        if (toUnit === '°C') return c;
+        if (toUnit === '°F') return (c * 1.8) + 32;
+        if (toUnit === 'K') return c + 273.15;
+        return c;
+    }, [val, fromUnit, toUnit]);
+
+    useEffect(() => { onResult(result.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + toUnit); }, [result, toUnit, onResult]);
+
+    return (
+        <div className="flex flex-col gap-6">
+            <InputGroup label="입력 온도" value={val} onChange={(v: any, u: string) => { if (u) setFromUnit(u); else setVal(v); }} unit={fromUnit} options={units} />
+            <InputGroup label="출력 온도" value={val} onChange={(v: any, u: string) => { if (u) setToUnit(u); else setVal(v); }} unit={toUnit} options={units} />
+            <ResultField label="온도 변환" value={result} unit={toUnit} />
         </div>
     );
 };
@@ -380,15 +400,8 @@ const GenericConverter = ({ units, defaultFrom, defaultTo, onResult, label }: an
     useEffect(() => { onResult(result.toLocaleString(undefined, { maximumFractionDigits: 5 }) + ' ' + toUnit); }, [result, toUnit, onResult]);
     return (
         <div className="flex flex-col gap-6">
-            <InputGroup label="값 입력" value={val} onChange={setVal} unit={fromUnit} />
-            <div className="grid grid-cols-2 gap-4">
-                <select className="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black outline-none focus:bg-white shadow-inner" value={fromUnit} onChange={e => setFromUnit(e.target.value)}>
-                    {Object.keys(units).map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-                <select className="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black outline-none focus:bg-white shadow-inner" value={toUnit} onChange={e => setToUnit(e.target.value)}>
-                    {Object.keys(units).map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-            </div>
+            <InputGroup label="입력 유형" value={val} onChange={(v: any, u: string) => { if (u) setFromUnit(u); else setVal(v); }} unit={fromUnit} options={Object.keys(units)} />
+            <InputGroup label="출력 유형" value={val} onChange={(v: any, u: string) => { if (u) setToUnit(u); else setVal(v); }} unit={toUnit} options={Object.keys(units)} />
             <ResultField label={label || "변환"} value={result} unit={toUnit} />
         </div>
     );
@@ -434,11 +447,12 @@ export default function SmartCalculator() {
             case 'fuel': return <FuelCalculator onResult={handleResult} />;
             case 'disc': return <DiscountCalculator onResult={handleResult} />;
             case 'speed_net': return <NetSpeedCalculator onResult={handleResult} />;
+            case 'temp': return <TemperatureConverter onResult={handleResult} />;
             case 'pyeong': return <SpecialConverter type="pyeong" onResult={handleResult} />;
             case 'fx': return <SpecialConverter type="fx" onResult={handleResult} />;
             case 'savings': return <SavingsCalculator onResult={handleResult} />;
             default:
-                if (unitRef[id]) return <GenericConverter units={unitRef[id].units} defaultFrom={unitRef[id].from} defaultTo={unitRef[id].to} onResult={handleResult} label={unitRef[id].label} />;
+                if (unitRef[id]) return <GenericConverter key={id} units={unitRef[id].units} defaultFrom={unitRef[id].from} defaultTo={unitRef[id].to} onResult={handleResult} label={unitRef[id].label} />;
                 return <div className="p-10 text-center font-black text-slate-300 italic opacity-40">ENGINE RECHARGING...</div>;
         }
     };
