@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 
-const GOTENBERG_URL = 'http://211.43.12.67:5000/forms/libreoffice/convert';
+const GOTENBERG_URL = process.env.GOTENBERG_URL!;
 
 export async function POST(req: NextRequest) {
     try {
