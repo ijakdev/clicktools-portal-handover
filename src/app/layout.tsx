@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 };
 
 import DynamicLayoutWrapper from "@/components/layout/DynamicLayoutWrapper";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -64,8 +65,9 @@ export default function RootLayout({
       <link rel="apple-touch-icon" href="/icon.png" />
 
       {/*에드센스 링크*/}
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2350957189788653"
-              crossOrigin="anonymous"></script>
+      <Script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2350957189788653"
+              strategy={"beforeInteractive"}
+              crossOrigin="anonymous"></Script>
     </head>
     <body
         className={`${inter.variable} ${outfit.variable} antialiased font-sans bg-slate-50 text-slate-900 min-h-screen`}
