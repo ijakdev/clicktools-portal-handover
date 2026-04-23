@@ -60,6 +60,7 @@ export default function RootLayout({
 
       {/* Icons*/}
       <link rel="icon" href="/icon.png" />
+
       <link rel="apple-touch-icon" href="/icon.png" />
 
       {/*에드센스 링크*/}
