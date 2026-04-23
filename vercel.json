@@ -1,9 +1,0 @@
-{
-  "redirects": [
-    {
-      "source": "https://clicktools.co.kr/:path*",
-      "destination": "https://www.clicktools.co.kr/:path*",
-      "permanent": true
-    }
-  ]
-}

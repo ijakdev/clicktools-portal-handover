@@ -2,6 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['sqlite3','sqlite', 'bcryptjs'],
+  async redirects(){
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'clicktools.co.kr',
+          },
+        ],
+        destination: 'https://www.clicktools.co.kr/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
